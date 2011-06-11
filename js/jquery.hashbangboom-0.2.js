@@ -40,11 +40,13 @@
 
 
 window.hbbSel=[];
+var xhr;
 if (jQuery) (function($) {
 
 		var haveContent=false;
         var haveMoved=false;
         var content='';
+        var loading=false;
         
         $.extend($.fn, {
     		hashBangBoom: function(options) {
@@ -86,11 +88,13 @@ if (jQuery) (function($) {
         };
 
         var click = function(url,o) {
-        	
+        	loading=true;
+        	resetContent(o);
+        	if (url=="") url="/"; //hack for IE9	
         	// run the click handler
         	o.click&&o.click(url);
         	//get the content
-        	$.post(url,{ajax:1},function(resp) {
+        	xhr=$.post(url,{ajax:1},function(resp) {
         		// filter the response if there is a filter defined
         		content=o.filter?$(resp).find(o.filter):resp;
 				haveContent=true; 
@@ -108,6 +112,12 @@ if (jQuery) (function($) {
         	}
         	
         };
+        
+        var resetContent = function(o) {
+        	if (xhr) xhr.abort();
+        	$(o.selector).css('left','0px');
+        	
+        }
 
         var transitionOut = function(o) {
         	// default slide out transition
@@ -125,7 +135,8 @@ if (jQuery) (function($) {
         var checkStatus = function(o) {
         	// check to see if the content has successfully loaded
         	if (haveMoved&&haveContent) {
-        		havemoved = haveContent = false;
+        		haveMoved = false;
+        		haveContent = false;
         		// update the content in the container
         		$(o.selector).replaceWith(content);
         		// run the user defined transition or the default one
@@ -134,6 +145,7 @@ if (jQuery) (function($) {
         		o.complete && o.complete();
         		// hashify all the links ready for the next click
         		hashify();
+        		loading=false;
             }
         };
 
